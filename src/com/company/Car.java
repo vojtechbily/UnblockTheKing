@@ -1,80 +1,119 @@
 package com.company;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.company.Exception.FieldOccupyException;
 
-/**
- * TODO: Enter a paragraph that summarizes what the class does and why someone might want to utilize it <p> © 2016
- * NetSuite Inc.
- *
- * @author vbily
- * @since 2016-03-24
- */
-class Car
-{
-	private Field startPos;
-	final private int length;
-	final private boolean isRed;
-	final private boolean isHorizontal;
-	final private char id;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
 
-	Car(Field startPos, int length, boolean isRed, boolean isHorizontal, char id)
-	{
-		this.startPos = startPos;
-		this.length = length;
-		this.isRed = isRed;
-		this.isHorizontal = isHorizontal;
-		this.id = id;
-	}
 
-	public char getId()
-	{
-		return id;
-	}
+class Car {
+    static private int id = 0;
+    final private boolean isRed;
+    final private boolean isHorizontal;
+    private int carId;
+    private Deque<Field> fields;
 
-	boolean isOnField(Field testedField)
-	{
-		return getOccupiedPositions().contains(testedField);
-	}
+    private boolean isInFinish = false;
 
-	public void move(Direction direction)
-	{
-		if (!isMoveValid(direction))
-			return;
-		switch (direction)
-		{
-			case DOWN:
-				startPos.move(0, -1);
-				break;
-			case UP:
-				startPos.move(0, 1);
-				break;
-			case LEFT:
-				startPos.move(-1, 0);
-				break;
-			case RIGHT:
-				startPos.move(1, 0);
-				break;
-		}
-	}
+    Car(Deque<Field> fields, boolean isRed, boolean isHorizontal) throws FieldOccupyException {
+        for (Field field : fields) {
+            field.occupy();
+        }
+        this.fields = fields;
+        this.isRed = isRed;
+        this.isHorizontal = isHorizontal;
+        carId = id++;
+    }
 
-	private boolean isMoveValid(Direction direction)
-	{
-		return true;
-	}
+    public boolean isInFinish() {
+        return isInFinish;
+    }
 
-	public List<Field> getOccupiedPositions()
-	{
-		List<Field> fields = new ArrayList<>(length);
-		for (int i = 0; i < length; i++)
-		{
-			Field field = new Field(startPos.getX(), startPos.getY());
-			if (isHorizontal)
-				field.move(i, 0);
-			else
-				field.move(0, i);
-			fields.add(field);
-		}
-		return fields;
-	}
+    public int getId() {
+        return carId;
+    }
+
+    public void move(Direction direction, Field newField) throws FieldOccupyException {
+        if (!isMoveValid(direction, newField))
+            return;
+        leaveField(direction);
+        occupyField(direction, newField);
+
+    }
+
+    Collection<Field> getOccupiedPositions() {
+        return Collections.unmodifiableCollection(fields);
+    }
+
+    private void appendTopField(Direction d, Field f) {
+        if (d.equals(Direction.RIGHT) || d.equals(Direction.UP))
+            fields.addLast(f);
+        else
+            fields.addFirst(f);
+    }
+
+    private Field getTailField(Direction d) {
+        if (d.equals(Direction.RIGHT) || d.equals(Direction.UP))
+            return fields.getFirst();
+        else
+            return fields.getLast();
+    }
+
+    private boolean isMoveValid(Direction direction, Field field) {
+        if (field.isBorder()) return false;
+        if (field.isOccupied()) return false;
+        switch (direction) {
+            case DOWN:
+                if (isHorizontal) return false;
+                break;
+            case UP:
+                if (isHorizontal) return false;
+                break;
+            case LEFT:
+                if (!isHorizontal) return false;
+                break;
+            case RIGHT:
+                if (!isHorizontal) return false;
+                if (isRed && field.isExit()) {
+                    isInFinish = true;
+                    return true;
+                }
+                break;
+        }
+
+        return true;
+    }
+
+    private void occupyField(Direction direction, Field field) throws FieldOccupyException {
+        field.occupy();
+        appendTopField(direction, field);
+    }
+
+    private void leaveField(Direction d) throws FieldOccupyException {
+        Field field = getTailField(d);
+        field.leave();
+        fields.remove(field);
+    }
+
+
+    Field getFieldCoordInDirection(Direction direction) {
+        int x, y;
+        if (isHorizontal) {
+            y = fields.getFirst().y;
+            if (direction.equals(Direction.LEFT)) {
+                x = fields.getFirst().x - 1;
+            } else {
+                x = fields.getLast().x + 1;
+            }
+        } else {
+            x = fields.getLast().x;
+            if (direction.equals(Direction.DOWN)) {
+                y = fields.getFirst().y - 1;
+            } else {
+                y = fields.getLast().y + 1;
+            }
+        }
+        return new Field(x, y);
+    }
 }
