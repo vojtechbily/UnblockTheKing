@@ -1,6 +1,6 @@
 package com.company;
 
-import com.company.Exception.FieldOccupyException;
+import com.company.exception.FieldOccupyException;
 
 import java.awt.Point;
 
@@ -9,7 +9,7 @@ import static com.company.Const.*;
 public class Field extends Point {
     private boolean isOccupied = false;
 
-    Field(int x, int y) {
+    public Field(int x, int y) {
         super(x, y);
     }
 
@@ -21,8 +21,11 @@ public class Field extends Point {
         return getLocation().equals(new Point(maxX - 1, exitY));
     }
 
+	/**
+	 * Exit is not a border field!!!
+     * @return
+     */
     boolean isBorder() {
-
         return !isExit() && (
                 getX() == 0 ||
                         getX() == maxX - 1 ||
@@ -33,7 +36,9 @@ public class Field extends Point {
 
     public void occupy() throws FieldOccupyException {
         if (isOccupied)
-            throw new FieldOccupyException(String.format("Field [%d % d] is already occupied", x, y));
+            throw new FieldOccupyException(String.format("Field [%d % d] is already occupied.", x, y));
+        if(isBorder())
+            throw new FieldOccupyException(String.format("Field [%d % d] is border.", x, y));
         isOccupied = true;
     }
 

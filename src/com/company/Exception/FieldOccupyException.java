@@ -1,4 +1,4 @@
-package com.company.Exception;
+package com.company.exception;
 
 public class FieldOccupyException extends Exception {
     public FieldOccupyException(String message) {

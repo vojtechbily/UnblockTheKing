@@ -1,14 +1,14 @@
 package com.company;
 
-import com.company.Exception.FieldOccupyException;
+import com.company.exception.FieldOccupyException;
+import com.company.exception.InvalidCarException;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 
-
-class Car {
-    static private int id = 0;
+public class Car {
+    static private int id=1;
     final private boolean isRed;
     final private boolean isHorizontal;
     private int carId;
@@ -16,7 +16,7 @@ class Car {
 
     private boolean isInFinish = false;
 
-    Car(Deque<Field> fields, boolean isRed, boolean isHorizontal) throws FieldOccupyException {
+    public Car(Deque<Field> fields, boolean isRed, boolean isHorizontal) throws Exception {
         for (Field field : fields) {
             field.occupy();
         }
@@ -24,6 +24,7 @@ class Car {
         this.isRed = isRed;
         this.isHorizontal = isHorizontal;
         carId = id++;
+        validate();
     }
 
     public boolean isInFinish() {
@@ -42,7 +43,7 @@ class Car {
 
     }
 
-    Collection<Field> getOccupiedPositions() {
+    public Collection<Field> getOccupiedPositions() {
         return Collections.unmodifiableCollection(fields);
     }
 
@@ -97,7 +98,7 @@ class Car {
     }
 
 
-    Field getFieldCoordInDirection(Direction direction) {
+    public Field getFieldCoordInDirection(Direction direction) {
         int x, y;
         if (isHorizontal) {
             y = fields.getFirst().y;
@@ -116,4 +117,33 @@ class Car {
         }
         return new Field(x, y);
     }
+
+    static void resetId()
+    {
+        id = 1;
+    }
+
+    public void validate() throws InvalidCarException
+    {
+        int i = 0;
+        final int firstX = fields.peekFirst().x;
+        final int firstY = fields.peekFirst().y;
+        for(Field field: fields)
+        {
+            if(isRed&& field.getY()!=Const.exitY)
+                throw new InvalidCarException("Red car is not in correct row.");
+
+            if(isHorizontal)
+            {
+                if(firstX+i != field.x) throw new InvalidCarException(String.format("First x: %s , %dth x: %s",firstX,i,field.x));
+                if(firstY != field.y) throw new InvalidCarException(String.format("First y: %s , %dth y: %s",firstY,i,field.y));
+            }
+            else {
+                if(firstX != field.x) throw new InvalidCarException(String.format("First x: %s , %dth x: %s",firstX,i,field.x));
+                if(firstY+i != field.y) throw new InvalidCarException(String.format("First y: %s , %dth y: %s",firstY,i,field.y));
+            }
+            i++;
+        }
+    }
+
 }

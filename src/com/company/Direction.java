@@ -1,8 +1,8 @@
 package com.company;
 
-enum Direction {
+public enum Direction {
     LEFT(),
     RIGHT(),
     UP(),
-    DOWN()
+    DOWN();
 }
