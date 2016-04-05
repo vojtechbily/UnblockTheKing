@@ -2,6 +2,11 @@ package com.company;
 
 import com.company.exception.FieldOccupyException;
 
+import java.awt.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +23,7 @@ public class GameDesc
 	private Field[][] fields = new Field[maxX][maxY];
 	private Collection<Car> cars;
 	private boolean gameWon = false;
+	private String filename = "game.save";
 
 	public Collection<Move> getMoves()
 	{
@@ -139,10 +145,38 @@ public class GameDesc
 		return Collections.unmodifiableCollection(cars);
 	}
 
-	// todo
-	public void loadGame() {}
+	public void loadGame() throws Exception
+	{
+		FileDialog dialog = new java.awt.FileDialog((java.awt.Frame) null);
+		dialog.setVisible(true);
+		filename  = dialog.getFile();
 
-	public void saveGame() {}
+		String fileContent  = new String(Files.readAllBytes(Paths.get(filename)));
+
+		for(String line : fileContent.split("\n"))
+		{
+			int pos = line.indexOf(";");
+			String carId = line.substring(0, pos);
+			int carIdInt = Integer.parseInt(carId);
+			String move = line.substring(pos+1);
+			Direction dir = Direction.fromString(move);
+			Car car = selectCar(carIdInt);
+			moveCar(car,dir);
+		}
+	}
+
+	public void saveGame() throws IOException
+	{
+		PrintWriter pw = new PrintWriter(filename);
+		for(Move move :moves){
+			pw.print(move.getCar().getId());
+			pw.print(";");
+			pw.print(move.getDirection());
+			pw.print("\n");
+		}
+		pw.flush();
+		pw.close();
+	}
 
 	public void resetGame() throws Exception
 	{
@@ -178,4 +212,13 @@ public class GameDesc
 	}
 
 
+	public Car selectCar(int carId)
+	{
+		for (Car car : cars)
+		{
+			if(car.getId() == carId)
+				return car;
+		}
+		throw new IllegalArgumentException(""+carId);
+	}
 }
